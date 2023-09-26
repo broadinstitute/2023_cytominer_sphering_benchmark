@@ -1,0 +1,5 @@
+#+title: Readme
+
+* Goal
+We aim to answer the question: Does sphering the morphological profiles improve retrievability?
+
