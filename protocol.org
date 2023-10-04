@@ -2,22 +2,39 @@
 #+OPTIONS: ^:nil
 #+PROPERTY: HEADER-ARGS+ :eval no-export
 
-* Main branch
+* Main
 :PROPERTIES:
-:header-args:shell: :session *main* :results output silent :exports code
+:header-args:shell: :session *sphering* :results output silent :exports code
 :END:
 
-Piggy-back on John's code to fetch the data. Just adjust syntax for fish.
+Piggy-back on John's code to fetch the data. Just use bash to fetch it all.
 #+begin_src shell
-function bash2fish; # Basic conversion of bash to fish script
-    cat - |
-    gsed -E "s/^(\S+)=(.*)/set \1 \2/" |
-    gsed "s/done/end/g" |
-    gsed "s/\s*do\s*//g" |
-    gsed -E "s/^wget (\S+) (.*)/wget '\1' \2/" |
-    fish
+wget -qO - https://github.com/carpenter-singh-lab/2023_Arevalo_BatchCorrection/raw/95052ea070195f1749e50f9ad058cfa53d7cc430/download_data.sh |
+    bash
+#+end_src
+
+Fetch Alex's script for position correction
+#+begin_src shell
+set OPEN_URLS "https://github.com/broadinstitute/position-effect-correction/raw/531990c2a1ab3913412138dbdaf2b73ac5427834/scripts/correct_position_effect.py"
+for URL in $OPEN_URLS;
+wget -P "src" $URL
 end
 
-wget -qO - https://github.com/carpenter-singh-lab/2023_Arevalo_BatchCorrection/raw/95052ea070195f1749e50f9ad058cfa53d7cc430/download_data.sh |
-    bash2fish
+#+end_src
+
+#+begin_src shell
+
+set REPO_URL "git@github.com:jump-cellpainting/2023_Arevalo_BatchCorrection_internal.git"
+set COMMIT "dbb2eb2fca07076fb9faa3a4f80086cd7c84d220"
+set FILES "loader.py" "normalization.py" "utils.py"
+
+git clone $REPO_URL tmp_repo
+cd tmp_repo
+git checkout $COMMIT
+for FILE in $FILES;
+cp $FILE ../src/
+end
+cd ..
+rm -rf tmp_repo
+
 #+end_src
