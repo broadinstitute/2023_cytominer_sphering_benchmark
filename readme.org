@@ -2,4 +2,31 @@
 
 * Goal
 We aim to answer the question: Does sphering the morphological profiles improve retrievability?
+* Steps
+We integrate different modules of pycytominer with Shantanu's sphering.
+** Download data
+** Fetch specific scripts to preprocess data
 
+* Resources and notes
+** Method discussion
+
+The method is
+1. estimate sphering transform across all negcon wells from all batches, then apply this transform to all wells (including negcon)
+2. estimate a sphering transform per batch (across all negcon wells from the batch), then apply the transform to each corresponding batch
+
+Currently, we do only 1. We discussed: why do 1 at all if we are doing 2? The way to think about is to consider the corresponding data generation model:
+
+Consider the data frame comprising all N batches
+X = {X_i} i=1...N
+X_i is a n_i x d dimensional matrix (n_i wells x d features)
+
+This X is the true data that we are trying to estimate, but we can observe only Z =  {Z_i} i=1...N
+Z_i is a n_i x p dimensional matrix (n_i wells x p features)
+To keep this simpler, we assume p = d
+
+Z_i = global_variation(local_variation_i(X_i))
+
+location_variation_i = batch-specific scaling, rotation, and translation of X_i
+global_variation = batch-agnostic scaling, rotation, and translation of local_variation_i(X_i)
+
+#1 removes global variation, #2 removes location variation
