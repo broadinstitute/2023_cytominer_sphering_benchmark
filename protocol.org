@@ -26,7 +26,8 @@ end
 
 set REPO_URL "git@github.com:jump-cellpainting/2023_Arevalo_BatchCorrection_internal.git"
 set COMMIT "dbb2eb2fca07076fb9faa3a4f80086cd7c84d220"
-set FILES "loader.py" "normalization.py" "utils.py"
+# set FILES "loader.py" "normalization.py" "utils.py" "feature_set.txt" "zca.py"
+set FILES "cleaning.py" "normalization.py" "utils.py"
 
 git clone $REPO_URL tmp_repo
 cd tmp_repo
