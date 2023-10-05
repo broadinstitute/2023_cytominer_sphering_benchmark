@@ -42,6 +42,8 @@ def remove_outliers(dframe: pd.DataFrame):
 
 
 config = {
+    "mean_centering": True,
+    "cell_count_adjustment": True,
     "mad_robustize": True,
     "remove_outliers": True,
     "remove_nans": True,
@@ -50,17 +52,12 @@ config = {
 }
 
 processed_data = sample_data
-if config["pcm_norm"]:
-    pcm_norm_output = normalize(
-        profiles=processed_data,
-        # features="infer",
-        # image_features=False,
-        meta_features="infer",
-        # samples="all",
-        method="mad_robustize",
-        mad_robustize_epsilon=0,
-    )
-
+if config["mean_centering"]:
+    processed_data = remove_outliers(processed_data)
+if config["cell_count_adjustment"]:
+    processed_data = remove_outliers(processed_data)
+if config["mad_robustize"]:
+    processed_data = remove_outliers(processed_data)
 if config["remove_outliers"]:
     processed_data = remove_outliers(processed_data)
 if config["remove_nans"]:
@@ -68,4 +65,4 @@ if config["remove_nans"]:
 if config["select_features"]:
     processed_data = feature_select(processed_data)
 if config["sphering"]:
-    second_sphere = Spherize(processed_data)
+    processed_data = Spherize(processed_data)
