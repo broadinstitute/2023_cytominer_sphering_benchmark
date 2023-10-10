@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from pycytominer import feature_select
-from pycytominer.cyto_utils import infer_cp_features, load_profiles
+from pycytominer.cyto_utils import infer_cp_features, load_profiles, output
 from pycytominer.feature_select import feature_select
 from pycytominer.operations.transform import RobustMAD, Spherize
 
@@ -62,7 +62,7 @@ def split_meta(data: pd.DataFrame):
 
 
 def apply_scaler_on_features(
-    data: pd.DataFrame, scaler: Spherize or RobustMad, **kwargs
+    data: pd.DataFrame, scaler: Spherize or RobustMAD, **kwargs
 ):
     """
     Split features and metadata and then apply a scaler operation to the features. Return the original data frame scaled.
@@ -75,13 +75,13 @@ def apply_scaler_on_features(
 
 # %%
 
-
 sources = list(Path("../inputs").rglob("*.parquet"))
 
 # %%
 
 np.random.seed(42)
-samples = np.random.choice(sources, 5, replace=False)
+# samples = np.random.choice(sources, 5, replace=False)
+samples = sources
 
 # %%
 
@@ -119,4 +119,12 @@ if config["remove_nans"]:
 if config["select_features"]:
     processed_data = feature_select(processed_data)
 if config["sphering"]:
-    processed_data = apply_scaler_on_features(processed_data, Spherize)
+    processed_data = apply_scaler_on_features(processed_data, Spherize, method="PCA")
+
+
+output(
+    df=processed_data,
+    output_filename="processed_data.csv.gz",
+    compression_options={"method": "gzip"},
+    float_format=None,
+)
