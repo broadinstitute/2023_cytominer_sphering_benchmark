@@ -9,8 +9,9 @@
 
 Piggy-back on John's code to fetch the data. Just use bash to fetch it all.
 #+begin_src shell
-wget -qO - https://github.com/carpenter-singh-lab/2023_Arevalo_BatchCorrection/raw/95052ea070195f1749e50f9ad058cfa53d7cc430/download_data.sh |
-    bash
+set BASEPATH "s3://cellpainting-gallery/cpg0016-jump-fixed"
+set source_id "source_4"
+aws s3 cp --recursive --no-sign-request "$BASEPATH/$source_id/workspace/profiles" inputs/$source_id/workspace/profiles
 #+end_src
 
 Fetch Alex's script for position correction
