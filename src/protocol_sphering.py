@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from pathos.multiprocessing import Pool
 from pycytominer import feature_select
 from pycytominer.cyto_utils import infer_cp_features, load_profiles, output
 from pycytominer.feature_select import feature_select
@@ -84,8 +85,8 @@ sources = list(Path("../inputs").rglob("*.parquet"))
 # %%
 
 np.random.seed(42)
-samples = np.random.choice(sources, 5, replace=False)
-# samples = sources
+# samples = np.random.choice(sources, 5, replace=False)
+samples = sources
 
 # %%
 
@@ -135,16 +136,23 @@ if config["sphering_2"]:
     processed_data["Metadata_Batch"] = processed_data["Metadata_Plate"].map(
         plate_to_batch
     )
-    processed_data = pd.concat(
-        [
-            apply_scaler_on_features(
-                processed_data.loc[processed_data["Metadata_Batch"] == batch],
+
+    batches = [
+        processed_data.loc[processed_data["Metadata_Batch"] == batch]
+        for batch in processed_data["Metadata_Batch"].unique()
+    ]
+
+    with Pool() as p:
+        results = p.map(
+            lambda x: apply_scaler_on_features(
+                x,
                 Spherize,
                 method="PCA",
-            )
-            for batch in processed_data["Metadata_Batch"].unique()
-        ]
-    )
+            ),
+            batches,
+        )
+
+    processed_data = pd.concat(results, axis=0, ignore_index=True)
 
 now = datetime.now().replace(microsecond=0).strftime("%Y%m%d_%H%M%S")
 run = Path("../runs/") / now
