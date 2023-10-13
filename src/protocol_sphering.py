@@ -34,7 +34,7 @@ def simple_save(data: pd.DataFrame, label: str or None = None):
     label = label or "output"
 
     output(
-        df=processed_data,
+        df=data,
         output_filename=run / f"{label}.csv.gz",
         compression_options={"method": "gzip"},
         float_format=None,
