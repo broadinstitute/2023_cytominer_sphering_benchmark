@@ -1,13 +1,10 @@
 """Functions for well position effect correction."""
+from concurrent import futures
 from typing import Optional
 
-from concurrent import futures
-
 import pandas as pd
-
 from scipy.stats import median_abs_deviation
 from statsmodels.formula.api import ols
-
 from tqdm.auto import tqdm
 
 
