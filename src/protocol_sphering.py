@@ -13,8 +13,7 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
-from pycytominer import feature_select
-from pycytominer.cyto_utils import infer_cp_features, load_profiles, output
+from pycytominer.cyto_utils import load_profiles, output
 from pycytominer.feature_select import feature_select
 
 from correct_position_effect import (regress_out_cell_counts_parallel,
@@ -24,6 +23,11 @@ from methods import (drop_na_inf, feature_select, mad_robustize,
 from wrappers import scale_grouped_parallel
 
 # %%
+
+
+now = datetime.now().replace(microsecond=0).strftime("%Y%m%d_%H%M%S")
+run = Path("./runs/") / now
+run.mkdir(parents=True, exist_ok=True)
 
 
 def simple_save(data: pd.DataFrame, label: str or None = None):
@@ -56,47 +60,36 @@ sources = list(Path("../inputs").rglob("*.parquet"))
 
 # %%
 
-np.random.seed(42)
-samples = np.random.choice(sources, 2, replace=False)
-# samples = sources
+# np.random.seed(42)
+# samples = np.random.choice(sources, 2, replace=False)
+samples = sources
 
 # %%
 
-try:
-    sample_data = pd.concat(
-        [load_profiles(sample) for sample in samples], axis=0, ignore_index=True
-    )
+sample_data = pd.concat(
+    [load_profiles(sample) for sample in samples], axis=0, ignore_index=True
+)
 
-    # Append metadata for batch-specific scaling
-    metadata = pd.read_csv("../metadata/experiment_metadata.csv")[
-        ["Assay_Plate_Barcode", "Batch_name"]
-    ]
+# Append metadata for batch-specific scaling
+metadata = pd.read_csv("../metadata/experiment_metadata.csv")[
+    ["Assay_Plate_Barcode", "Batch_name"]
+]
 
-    processed_data = sample_data
-    plate_to_batch = {plate: batch for plate, batch in metadata.values}
-    processed_data["Metadata_Batch"] = processed_data["Metadata_Plate"].map(
-        plate_to_batch
-    )
+processed_data = sample_data
+plate_to_batch = {plate: batch for plate, batch in metadata.values}
+processed_data["Metadata_Batch"] = processed_data["Metadata_Plate"].map(plate_to_batch)
 
-    now = datetime.now().replace(microsecond=0).strftime("%Y%m%d_%H%M%S")
-    run = Path("../runs/") / now
-    run.mkdir(parents=True, exist_ok=True)
+for scaler_level, kwargs in config.items():
+    scaler, *level = scaler_level
+    level = level[0] if len(level) else None
 
-    for scaler_level, kwargs in config.items():
-        scaler, *level = scaler_level
-        level = level[0] if len(level) else None
+    if level:  # Split into subsets and process them
+        processed_data = scale_grouped_parallel(
+            data=processed_data, column=level[0], scaler=scaler, **kwargs
+        )
 
-        if level:  # Split into subsets and process them
-            processed_data = scale_grouped_parallel(
-                data=processed_data, column=level[0], scaler=scaler, **kwargs
-            )
+    else:
+        processed_data = scaler(processed_data, **kwargs)
 
-        else:
-            processed_data = scaler(processed_data, **kwargs)
-
-        if scaler is spherize:
-            simple_save(processed_data, label=level)
-
-except Exception as e:
-    print(e)
-    shutil.rmtree(run)
+    if scaler is spherize:
+        simple_save(processed_data, label=level)
