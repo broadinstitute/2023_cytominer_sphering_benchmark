@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 from pycytominer.cyto_utils import load_profiles, output
 from pycytominer.feature_select import feature_select
+from tqdm import tqdm
 
 from correct_position_effect import (regress_out_cell_counts_parallel,
                                      subtract_well_mean_parallel)
@@ -45,13 +46,16 @@ def simple_save(data: pd.DataFrame, label: str or None = None):
 
 # ( scaler, level ) -> kwargs
 config = {
+    # Alex
     (subtract_well_mean_parallel,): {},
     (regress_out_cell_counts_parallel,): {"cc_col": "Nuclei_Number_Object_Number"},
+    # John
     (mad_robustize,): {"epsilon": 1e2},
     (remove_outliers,): {"samples_thresh": 1e4},
     (drop_na_inf,): {"axis": 1},
+    # Standard
     (feature_select,): {},
-    (spherize,): {},
+    (spherize,): {"method": "PCA"},
     (spherize, "Metadata_Batch"): {"method": "PCA"},
 }
 
@@ -79,17 +83,20 @@ processed_data = sample_data
 plate_to_batch = {plate: batch for plate, batch in metadata.values}
 processed_data["Metadata_Batch"] = processed_data["Metadata_Plate"].map(plate_to_batch)
 
-for scaler_level, kwargs in config.items():
+# %% Execution
+
+for scaler_level, kwargs in tqdm(config.items()):
     scaler, *level = scaler_level
     level = level[0] if len(level) else None
 
     if level:  # Split into subsets and process them
         processed_data = scale_grouped_parallel(
-            data=processed_data, column=level[0], scaler=scaler, **kwargs
+            data=processed_data, column=level, scaler=scaler, **kwargs
         )
-
     else:
         processed_data = scaler(processed_data, **kwargs)
 
     if scaler is spherize:
-        simple_save(processed_data, label=level)
+        simple_save(processed_data, label=f"sphering_{level}")
+    elif scaler is feature_select:
+        simple_save(processed_data, label="baseline")
