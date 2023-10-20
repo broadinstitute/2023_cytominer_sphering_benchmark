@@ -1,9 +1,11 @@
 #!/usr/bin/env jupyter
 "Wrappers that homogeneise method interfaces."
 
+from inspect import isclass
 from typing import Callable
 
 import pandas as pd
+from pathos.multiprocessing import Pool
 from pycytominer.cyto_utils import infer_cp_features
 from pycytominer.operations.transform import RobustMAD, Spherize
 
@@ -19,8 +21,12 @@ def apply_scaler(data: pd.DataFrame, scaler: Spherize or RobustMAD, **kwargs):
     See more details on
     https://github.com/cytomining/pycytominer/blob/main/pycytominer/normalize.py
     """
-    fitted_scaler = scaler(**kwargs).fit(data)
-    results = fitted_scaler.transform(data)
+    if isclass(scaler):  # Unwrapped method
+        fitted_scaler = scaler(**kwargs).fit(data)
+        results = fitted_scaler.transform(data)
+    else:  # Already wrapped method
+        results = scaler(data, **kwargs)
+
     if isinstance(results, pd.DataFrame):
         results = results.values
     return pd.DataFrame(
@@ -33,9 +39,7 @@ def apply_scaler(data: pd.DataFrame, scaler: Spherize or RobustMAD, **kwargs):
     # normalized = meta_df.merge(feature_df, left_index=True, right_index=True)
 
 
-def apply_scaler_on_features(
-    data: pd.DataFrame, scaler: Spherize or RobustMAD, **kwargs
-):
+def apply_scaler_on_features(data: pd.DataFrame, scaler: Callable, **kwargs):
     """
     Split features and metadata and then apply a scaler operation to the features. Return the original data frame scaled.
     """
@@ -59,15 +63,16 @@ def scale_grouped_parallel(data: pd.DataFrame, column: str, scaler: Callable, **
     """
     Parallelises a scaler on subsets of the data.
     """
-    groped_data = [
-        processed_data.loc[processed_data[column] == group_id]
-        for group_id in processed_data[column].unique()
+    grouped_data = [
+        data.loc[data[column] == group_id] for group_id in data[column].unique()
     ]
 
-    with Pool() as p:
-        results = p.map(
-            lambda x: apply_scaler_on_features(x, scaler, **kwargs),
-            grouped_data,
-        )
+    # with Pool() as p:
+    # results = p.map(
+    #     lambda x: apply_scaler_on_features(x, scaler, **kwargs),
+    #     grouped_data,
+    # )
+
+    results = [apply_scaler(x, scaler, **kwargs) for x in grouped_data]
 
     return pd.concat(results, axis=0, ignore_index=True)
