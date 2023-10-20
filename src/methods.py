@@ -2,6 +2,8 @@
 """
 Methods to be combined to generate pipelines
 """
+import logging
+
 import numpy as np
 import pandas as pd
 from pycytominer.feature_select import feature_select
@@ -9,7 +11,9 @@ from pycytominer.operations.transform import RobustMAD, Spherize
 
 from cleaning import drop_outlier_feats, drop_outlier_samples
 from utils import find_feat_cols
-from wrappers import apply_scaler_on_features
+from wrappers import apply_scaler, apply_scaler_on_features
+
+logger = logging.getLogger(__name__)
 
 
 def drop_na_inf(dframe: pd.DataFrame, axis: int = 0):
