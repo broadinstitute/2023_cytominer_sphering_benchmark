@@ -64,9 +64,11 @@ sources = list(Path("../inputs").rglob("*.parquet"))
 
 # %%
 
-# np.random.seed(42)
-# samples = np.random.choice(sources, 2, replace=False)
-samples = sources
+if False:  # Sample data
+    np.random.seed(42)
+    samples = np.random.choice(sources, 2, replace=False)
+else:
+    samples = sources
 
 # %%
 
