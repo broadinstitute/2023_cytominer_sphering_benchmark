@@ -80,12 +80,12 @@ def scale_grouped_parallel(data: pd.DataFrame, column: str, scaler: Callable, **
         data.loc[data[column] == group_id] for group_id in data[column].unique()
     ]
 
-    # with Pool() as p:
-    # results = p.map(
-    #     lambda x: apply_scaler_on_features(x, scaler, **kwargs),
-    #     grouped_data,
-    # )
+    with Pool() as p:
+        results = p.map(
+            lambda x: apply_scaler(x, scaler, **kwargs),
+            grouped_data,
+        )
 
-    results = [apply_scaler(x, scaler, **kwargs) for x in grouped_data]
+    # results = [apply_scaler(x, scaler, **kwargs) for x in grouped_data]
 
     return pd.concat(results, axis=0, ignore_index=True)
