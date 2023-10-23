@@ -53,8 +53,11 @@ def apply_scaler_on_features(
 
     if fit_negcon:
         negcon_indices = meta["Metadata_control_type"] == "negcon"
-        features = features.loc[~negcon_indices]
         negcons = features.loc[negcon_indices]
+        assert len(
+            negcons
+        ), f"No negative controls during step {scaler}. Pipeline interrupted."
+
         kwargs["data_to_fit"] = negcons
 
     processed_features = apply_scaler(features, scaler, **kwargs)
