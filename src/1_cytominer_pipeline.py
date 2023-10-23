@@ -76,12 +76,20 @@ sample_data = pd.concat(
 
 # Append metadata for batch-specific scaling
 metadata = pd.read_csv("../metadata/experiment_metadata.csv")[
-    ["Assay_Plate_Barcode", "Batch_name"]
+    ["Assay_Plate_Barcode", "Batch_name", "Plate_Map_Name"]
 ]
 
 processed_data = sample_data
-plate_to_batch = {plate: batch for plate, batch in metadata.values}
+plate_to_batch = {
+    plate: batch
+    for plate, batch in metadata[["Assay_Plate_Barcode", "Batch_name"]].values
+}
+
 processed_data["Metadata_Batch"] = processed_data["Metadata_Plate"].map(plate_to_batch)
+
+from metadata import add_metadata
+
+processed_data = add_metadata(processed_data, metadata)
 
 # %% Execution
 
