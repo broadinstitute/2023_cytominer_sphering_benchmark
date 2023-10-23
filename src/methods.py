@@ -53,7 +53,7 @@ def remove_outliers(
 
 
 def spherize(data: pd.DataFrame, **kwargs):
-    return apply_scaler_on_features(data, Spherize, **kwargs)
+    return apply_scaler_on_features(data, Spherize, fit_negcon=True, **kwargs)
 
 
 def mad_robustize(data: pd.DataFrame, **kwargs):
