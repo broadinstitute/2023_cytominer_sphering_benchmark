@@ -21,7 +21,8 @@ numpy = "^1.26.0"
 tqdm = "^4.66.1"
 kneed = "^0.8.5"
 pathos = "^0.3.1"
-broad-babel = "^0.1.5"
+broad-babel = "^0.1.6"
+pooch = "^1.7.0"
 
 
 [tool.poetry.group.dev.dependencies]
