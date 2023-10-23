@@ -21,8 +21,10 @@ def apply_scaler(data: pd.DataFrame, scaler: Spherize or RobustMAD, **kwargs):
     See more details on
     https://github.com/cytomining/pycytominer/blob/main/pycytominer/normalize.py
     """
+    data_to_fit = kwargs.pop("data_to_fit", data)
+
     if isclass(scaler):  # Unwrapped method
-        fitted_scaler = scaler(**kwargs).fit(data)
+        fitted_scaler = scaler(**kwargs).fit(data_to_fit)
         results = fitted_scaler.transform(data)
     else:  # Already wrapped method
         results = scaler(data, **kwargs)
@@ -39,11 +41,22 @@ def apply_scaler(data: pd.DataFrame, scaler: Spherize or RobustMAD, **kwargs):
     # normalized = meta_df.merge(feature_df, left_index=True, right_index=True)
 
 
-def apply_scaler_on_features(data: pd.DataFrame, scaler: Callable, **kwargs):
+def apply_scaler_on_features(
+    data: pd.DataFrame, scaler: Callable, fit_negcon: bool = False, **kwargs
+):
     """
-    Split features and metadata and then apply a scaler operation to the features. Return the original data frame scaled.
+    Split features and metadata and then apply a scaler operation to the features.
+    Optionally, pass negative controls (negcon) separately for fitting.
+    Return the original data frame scaled.
     """
     features, meta = split_meta(data)
+
+    if fit_negcon:
+        negcon_indices = meta["Metadata_control_type"] == "negcon"
+        features = features.loc[~negcon_indices]
+        negcons = features.loc[negcon_indices]
+        kwargs["data_to_fit"] = negcons
+
     processed_features = apply_scaler(features, scaler, **kwargs)
 
     return meta.merge(processed_features, left_index=True, right_index=True)
