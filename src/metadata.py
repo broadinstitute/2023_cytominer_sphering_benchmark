@@ -25,16 +25,12 @@ def add_metadata(data: pd.DataFrame, platemap_metadata: pd.DataFrame):
 
     def find_first_return_other_col(
         data: pd.DataFrame, query: str, input_col: str, output_col: str
-    ):
+    ) -> str:
         # Use one column in a df to return another
         # MAYBE there is a simpler way using pd.query?
         return data.iloc[data[input_col].eq(query).argmax()][output_col]
 
-    plate_maps = []
-    for plate_barcode in data["Metadata_Plate"].unique():
-        # platemap_name = platemap_metadata.iloc[
-        #     platemap_metadata["Assay_Plate_Barcode"].eq(plate_barcode).argmax()
-        # ]["Plate_Map_Name"]
+    def find_plate_map_file(plate_barcode: str) -> pd.DataFrame:
         plate_map_name = find_first_return_other_col(
             platemap_metadata, plate_barcode, "Assay_Plate_Barcode", "Plate_Map_Name"
         )
@@ -44,8 +40,7 @@ def add_metadata(data: pd.DataFrame, platemap_metadata: pd.DataFrame):
         if plate_map_name not in plate_map.columns:
             plate_map["plate_map_name"] = plate_map_name
 
-        plate_maps.append(plate_map)
-    platemaps_meta = pd.concat(plate_maps, ignore_index=True)
+        return plate_map
 
     def try_query(x: str or float):
         result = ("None", "None")
@@ -70,6 +65,10 @@ def add_metadata(data: pd.DataFrame, platemap_metadata: pd.DataFrame):
                 else:
                     logging.log(level=logging.ERROR, msg=f"Query {x} failed")
         return result
+
+    with Pool() as p:
+        plate_maps = p.map(find_plate_map_file, data["Metadata_Plate"].unique())
+    platemaps_meta = pd.concat(plate_maps, ignore_index=True)
 
     control_info = platemaps_meta["broad_sample"].map(try_query)
 
