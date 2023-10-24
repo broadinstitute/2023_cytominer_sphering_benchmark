@@ -5,7 +5,6 @@ Data is pooled by well data
 """
 # %% Imports
 
-
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -13,18 +12,21 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
+from pathos.multiprocessing import Pool
 from pycytominer.cyto_utils import load_profiles, output
 from pycytominer.feature_select import feature_select
 from tqdm import tqdm
 
 from correct_position_effect import (regress_out_cell_counts_parallel,
                                      subtract_well_mean_parallel)
+from metadata import add_metadata
 from methods import (drop_na_inf, feature_select, mad_robustize,
                      remove_outliers, spherize)
 from wrappers import scale_grouped_parallel
 
 # %%
 
+sample = None
 
 now = datetime.now().replace(microsecond=0).strftime("%Y%m%d_%H%M%S")
 run = Path("./runs/") / now
@@ -46,6 +48,8 @@ def simple_save(data: pd.DataFrame, label: str or None = None):
 
 # ( scaler, level ) -> kwargs
 config = {
+    # Alan
+    # TODO Add removal of entries with wrong metadata
     # Alex
     (subtract_well_mean_parallel,): {},
     (regress_out_cell_counts_parallel,): {"cc_col": "Nuclei_Number_Object_Number"},
@@ -64,34 +68,31 @@ sources = list(Path("../inputs").rglob("*.parquet"))
 
 # %%
 
-if False:  # Sample data
+if sample is not None:  # Sample data
     np.random.seed(42)
-    samples = np.random.choice(sources, 2, replace=False)
-else:
-    samples = sources
+    sources = np.random.choice(sources, 2, replace=False)
 
 # %%
 
-sample_data = pd.concat(
-    [load_profiles(sample) for sample in samples], axis=0, ignore_index=True
-)
+
+with Pool() as p:
+    data = p.map(load_profiles, sources)
+data = pd.concat(data, axis=0, ignore_index=True)
 
 # Append metadata for batch-specific scaling
 metadata = pd.read_csv("../metadata/experiment_metadata.csv")[
     ["Assay_Plate_Barcode", "Batch_name", "Plate_Map_Name"]
 ]
 
-processed_data = sample_data
 plate_to_batch = {
     plate: batch
     for plate, batch in metadata[["Assay_Plate_Barcode", "Batch_name"]].values
 }
 
-processed_data["Metadata_Batch"] = processed_data["Metadata_Plate"].map(plate_to_batch)
+data["Metadata_Batch"] = data["Metadata_Plate"].map(plate_to_batch)
 
-from metadata import add_metadata
 
-processed_data = add_metadata(processed_data, metadata)
+processed_data = add_metadata(data, metadata)
 
 # %% Execution
 
