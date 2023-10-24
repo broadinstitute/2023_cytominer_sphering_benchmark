@@ -35,8 +35,6 @@ def add_metadata(data: pd.DataFrame, platemap_metadata: pd.DataFrame):
         # platemap_name = platemap_metadata.iloc[
         #     platemap_metadata["Assay_Plate_Barcode"].eq(plate_barcode).argmax()
         # ]["Plate_Map_Name"]
-        if plate_barcode in ["BR00123523", "BR00123524", "BR00125181", "BR00125638"]:
-            print("stop")
         plate_map_name = find_first_return_other_col(
             platemap_metadata, plate_barcode, "Assay_Plate_Barcode", "Plate_Map_Name"
         )
