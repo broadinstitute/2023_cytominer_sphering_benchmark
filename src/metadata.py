@@ -6,22 +6,33 @@ import logging
 
 import pandas as pd
 from broad_babel.query import run_query
+from pathos.multiprocessing import Pool
 
 logging.basicConfig(format="%(levelname)s:%(asctime)s:%(name)s:%(message)s")
 logging.getLogger("metadata").setLevel(logging.INFO)
 
 
-def add_metadata(data: pd.DataFrame, platemap_metadata: pd.DataFrame):
+def add_metadata(
+    data: pd.DataFrame, platemap_metadata: pd.DataFrame = None, pool: bool or int = True
+):
     """
     Generate a dataframe with information on perturbation types to be appended to an existing dataframe
     This also homoegeneises control metadata to fit in one column instead of two.
     Inputs:
        data: Data Frame containing features and basic metadata (batch, plate, well)
-       Metadata_Plate: Data Frame that maps a plate name to a layout (present as txts)
+       platemap_metadata: Data Frame that maps a plate name to a layout (present as txts)
     Requires:
        - ../metadata/platemaps/{platemaps}.txt exist and contain plate layouts.
        - broad_babel installed (which provides info on what is a control)
     """
+
+    if platemap_metadata is None:
+        # FUTURE remove warning once platemap metadata is publicly available
+        raise Warning("Experiment metadata is not public yet")
+        platemap_metadata = pd.read_csv(
+            "https://raw.githubusercontent.com/jump-cellpainting/morphmap/87e6e0c954964b5e80b40a4ffd27a2536ab702d2/00.0.explore-data/output/experiment-metadata.tsv",
+            sep="\t",
+        )
 
     def find_first_return_other_col(
         data: pd.DataFrame, query: str, input_col: str, output_col: str
