@@ -124,8 +124,14 @@ def add_metadata(
                     logging.log(level=logging.ERROR, msg=f"Query {x} failed")
         return result
 
-    with Pool() as p:
-        plate_maps = p.map(find_plate_map_file, data["Metadata_Plate"].unique())
+    if pool:
+        if isinstance(pool, bool):
+            pool = None
+        with Pool(pool) as p:
+            plate_maps = p.map(find_plate_map_file, data["Metadata_Plate"].unique())
+    else:
+        plate_maps = [find_plate_map_file(x) for x in data["Metadata_Plate"].unique()]
+
     platemaps_meta = pd.concat(plate_maps, ignore_index=True)
 
     control_info = platemaps_meta["broad_sample"].map(try_query)
