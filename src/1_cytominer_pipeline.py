@@ -48,8 +48,6 @@ def simple_save(data: pd.DataFrame, label: str or None = None):
 
 # ( scaler, level ) -> kwargs
 config = {
-    # Alan
-    # TODO Add removal of entries with wrong metadata
     # Alex
     (subtract_well_mean_parallel,): {},
     (regress_out_cell_counts_parallel,): {"cc_col": "Nuclei_Number_Object_Number"},
