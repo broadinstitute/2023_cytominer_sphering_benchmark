@@ -30,11 +30,58 @@ def add_metadata(data: pd.DataFrame, platemap_metadata: pd.DataFrame):
         # MAYBE there is a simpler way using pd.query?
         return data.iloc[data[input_col].eq(query).argmax()][output_col]
 
-    def find_plate_map_file(plate_barcode: str) -> pd.DataFrame:
+    def find_plate_map_file(
+        plate_barcode: str, commit: str = "6552726ce60a47d3c4c7846fe1766a7c08f96fc1"
+    ) -> pd.DataFrame:
+        """Fetch plate barcode from public git location.
+
+        Parameters
+        ----------
+        plate_barcode : str
+            name of plate map to fetch
+        commit : str
+            commit chosen to fetch
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with plate map information, including well info.
+
+        Examples
+        --------
+        FIXME: Add docs.
+
+        """
         plate_map_name = find_first_return_other_col(
             platemap_metadata, plate_barcode, "Assay_Plate_Barcode", "Plate_Map_Name"
         )
-        plate_map = pd.read_csv(f"../metadata/platemaps/{plate_map_name}.txt", sep="\t")
+        for batch in (
+            "2021_04_26_Batch1",
+            "2021_05_10_Batch3",
+            "2021_05_17_Batch4",
+            "2021_05_31_Batch2",
+            "2021_06_07_Batch5",
+            "2021_06_14_Batch6",
+            "2021_06_21_Batch7",
+            "2021_07_12_Batch8",
+            "2021_07_26_Batch9",
+            "2021_08_02_Batch10",
+            "2021_08_09_Batch11",
+            "2021_08_23_Batch12",
+            "2021_08_30_Batch13",
+        ):  # explore known batches
+            # plate_map = pd.read_csv(f"../metadata/platemaps/{plate_map_name}.txt", sep="\t")
+            try:
+                plate_map = pd.read_csv(
+                    f"https://raw.githubusercontent.com/jump-cellpainting/jump-orf-data/{commit}/metadata/platemaps/{batch}/platemap/{plate_map_name}.txt",
+                    sep="\t",
+                )
+                break
+            except:
+                continue
+
+        else:
+            logging.log(logging.warning, f"Missing plate map {plate_map_name}")
 
         # Prioritise found name over file name
         if plate_map_name not in plate_map.columns:
