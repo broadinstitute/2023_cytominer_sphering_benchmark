@@ -176,8 +176,13 @@ def add_metadata(
             platemap_metadata, x, "Assay_Plate_Barcode", "Plate_Map_Name"
         )
     )
+    data["Metadata_broad_sample"] = [
+        plate_well_to_field("broad_sample")[plate][well]
+        for plate, well in data[["Metadata_Plate_Map", "Metadata_Well"]].to_numpy()
+    ]
+
     data["Metadata_control_type"] = [
-        plate_well_to_perturbation[plate][well]
+        plate_well_to_field("pert_type")[plate][well]
         for plate, well in data[["Metadata_Plate_Map", "Metadata_Well"]].to_numpy()
     ]
 
