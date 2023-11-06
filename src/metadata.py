@@ -13,7 +13,10 @@ logging.getLogger("metadata").setLevel(logging.INFO)
 
 
 def add_metadata(
-    data: pd.DataFrame, platemap_metadata: pd.DataFrame = None, pool: bool or int = True
+    data: pd.DataFrame,
+    platemap_metadata: pd.DataFrame = None,
+    pool: bool or int = True,
+    cols_to_add: list = ["Metadata_control_type", "Metadata_broad_samples"],
 ):
     """
     Generate a dataframe with information on perturbation types to be appended to an existing dataframe
@@ -148,15 +151,23 @@ def add_metadata(
         control_type, "control_type"
     ]
 
-    plate_well_to_perturbation = {
-        plate_map: {
-            well_pert.well_position: well_pert.pert_type
-            for well_pert in platemaps_meta.loc[
-                platemaps_meta["plate_map_name"] == plate_map
-            ][["well_position", "pert_type"]].itertuples()
+    def plate_well_to_field(field: str):
+        return {
+            plate_map: {
+                well_pert.well_position: getattr(well_pert, field)
+                for well_pert in platemaps_meta.loc[
+                    platemaps_meta["plate_map_name"] == plate_map
+                ][["well_position", field]].itertuples()
+            }
+            for plate_map in platemaps_meta["plate_map_name"].unique()
         }
-        for plate_map in platemaps_meta["plate_map_name"].unique()
-    }
+
+    # plate_well_to_perturbation = {
+    #     plate_map: {
+    #         well_pert.well_position: well_pert.pert_type
+    #         for well_pert in platemaps_meta.loc[
+    #             platemaps_meta["plate_map_name"] == plate_map
+    #         ][["well_position", "broad_sample"]].itertuples()
 
     # Copy Plate_Map info from platemap_metadata to data
 

@@ -12,16 +12,23 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
-from pathos.multiprocessing import Pool
-from pycytominer.cyto_utils import load_profiles, output
+from pycytominer.cyto_utils import output
 from pycytominer.feature_select import feature_select
 from tqdm import tqdm
 
-from correct_position_effect import (regress_out_cell_counts_parallel,
-                                     subtract_well_mean_parallel)
+from correct_position_effect import (
+    regress_out_cell_counts_parallel,
+    subtract_well_mean_parallel,
+)
 from metadata import add_metadata
-from methods import (drop_na_inf, feature_select, mad_robustize,
-                     remove_outliers, spherize)
+from methods import (
+    drop_na_inf,
+    feature_select,
+    mad_robustize,
+    remove_outliers,
+    spherize,
+)
+from utils import load_profiles_threaded
 from wrappers import scale_grouped_parallel
 
 # %%
