@@ -80,8 +80,7 @@ if sample is not None:  # Sample data
 # %%
 
 
-with Pool() as p:
-    data = p.map(load_profiles, sources)
+data = load_profiles_threaded(sources)
 data = pd.concat(data, axis=0, ignore_index=True)
 
 # Append metadata for batch-specific scaling
