@@ -44,7 +44,7 @@ def add_metadata(
     def find_plate_map_file(
         plate_barcode: str, commit: str = "6552726ce60a47d3c4c7846fe1766a7c08f96fc1"
     ) -> pd.DataFrame:
-        """Fetch plate barcode from public git location.
+        """Fetch JUMP-ORF plate barcode from public git location and integrate it into an existing data frame.
 
         Parameters
         ----------

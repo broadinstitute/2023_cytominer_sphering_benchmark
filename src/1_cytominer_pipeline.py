@@ -90,10 +90,12 @@ plate_to_batch = {
 data["Metadata_Batch"] = data["Metadata_Plate"].map(plate_to_batch)
 
 
+print("Adding control metadata to dataset")
 processed_data = add_metadata(data, metadata)
 
 # %% Execution
 
+print(f"Starting pipeline run {now}")
 for scaler_level, kwargs in tqdm(config.items()):
     scaler, *level = scaler_level
     level = level[0] if len(level) else None
