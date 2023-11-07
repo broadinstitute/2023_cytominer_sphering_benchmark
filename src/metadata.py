@@ -171,15 +171,27 @@ def add_metadata(
 
     # Copy Plate_Map info from platemap_metadata to data
 
-    data["Metadata_Plate_Map"] = data["Metadata_Plate"].map(
-        lambda x: find_first_return_other_col(
-            platemap_metadata, x, "Assay_Plate_Barcode", "Plate_Map_Name"
+    # data["Metadata_Plate_Map"] = data["Metadata_Plate"].map(
+    #     lambda x: find_first_return_other_col(
+    #         platemap_metadata, x, "Assay_Plate_Barcode", "Plate_Map_Name"
+    #     )
+    # )
+    with Pool() as p:
+        data["Metadata_Plate_Map"] = p.map(
+            lambda x: find_first_return_other_col(
+                platemap_metadata,
+                x,
+                "Assay_Plate_Barcode",
+                "Plate_Map_Name",
+            ),
+            data["Metadata_Plate"],
         )
-    )
-    data["Metadata_broad_sample"] = [
-        plate_well_to_field("broad_sample")[plate][well]
-        for plate, well in data[["Metadata_Plate_Map", "Metadata_Well"]].to_numpy()
-    ]
+    plate_well_to_broad_sample = plate_well_to_field("broad_sample")
+    with Pool() as p:
+        data["Metadata_broad_sample"] = p.map(
+            lambda x: plate_well_to_broad_sample[x[0]][x[1]],
+            data[["Metadata_Plate_Map", "Metadata_Well"]].to_numpy(),
+        )
 
     data["Metadata_control_type"] = [
         plate_well_to_field("pert_type")[plate][well]
