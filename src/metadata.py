@@ -4,6 +4,7 @@ Helper functions
 
 import logging
 
+import numpy as np
 import pandas as pd
 from broad_babel.query import run_query
 from pathos.multiprocessing import Pool
@@ -137,11 +138,30 @@ def add_metadata(
 
     platemaps_meta = pd.concat(plate_maps, ignore_index=True)
 
-    control_info = platemaps_meta["broad_sample"].map(try_query)
+    unique_ids = platemaps_meta["broad_sample"].unique()
+    print("Querying perturbation types")
+    with Pool() as p:
+        control_info = p.map(try_query, unique_ids)
+
+    sample_control = {k: v for k, v in zip(unique_ids, control_info)}
+
+    # Generate broad_sample -> pert_type dictionary
+    # id_pert = {
+    #     broad_sample: (pert, control)
+    #     for broad_sample, (pert, control) in zip(unique_ids, control_info)
+    # }
 
     # Add control information
-    for i, col in enumerate(("pert_type", "control_type")):
-        platemaps_meta[col] = control_info.map(lambda x: x[i])
+    # for i, col in enumerate(("pert_type", "control_type")):
+    # platemaps_meta[("pert_type","control_type")] = control_info.map(lambda x: x[i])
+    tmp = np.array(
+        [
+            sample_control.get(sample, ("None", "None"))
+            for sample in platemaps_meta["broad_sample"]
+        ]
+    )
+    tmp[tmp == None] = "None"
+    platemaps_meta[["pert_type", "control_type"]] = tmp
 
     # Homogenise structure to have control type within pert_type column
     control_type = platemaps_meta["control_type"].isin(
@@ -150,6 +170,10 @@ def add_metadata(
     platemaps_meta.loc[control_type, "pert_type"] = platemaps_meta.loc[
         control_type, "control_type"
     ]
+
+    id_pert = pd.Series(
+        platemaps_meta["pert_type"].values, index=platemaps_meta["broad_sample"]
+    ).to_dict()
 
     def plate_well_to_field(field: str):
         return {
@@ -162,20 +186,7 @@ def add_metadata(
             for plate_map in platemaps_meta["plate_map_name"].unique()
         }
 
-    # plate_well_to_perturbation = {
-    #     plate_map: {
-    #         well_pert.well_position: well_pert.pert_type
-    #         for well_pert in platemaps_meta.loc[
-    #             platemaps_meta["plate_map_name"] == plate_map
-    #         ][["well_position", "broad_sample"]].itertuples()
-
-    # Copy Plate_Map info from platemap_metadata to data
-
-    # data["Metadata_Plate_Map"] = data["Metadata_Plate"].map(
-    #     lambda x: find_first_return_other_col(
-    #         platemap_metadata, x, "Assay_Plate_Barcode", "Plate_Map_Name"
-    #     )
-    # )
+    print("Find Plate_Map_Name")
     with Pool() as p:
         data["Metadata_Plate_Map"] = p.map(
             lambda x: find_first_return_other_col(
@@ -186,6 +197,7 @@ def add_metadata(
             ),
             data["Metadata_Plate"],
         )
+    print("Assign broad samples")
     plate_well_to_broad_sample = plate_well_to_field("broad_sample")
     with Pool() as p:
         data["Metadata_broad_sample"] = p.map(
@@ -193,9 +205,14 @@ def add_metadata(
             data[["Metadata_Plate_Map", "Metadata_Well"]].to_numpy(),
         )
 
-    data["Metadata_control_type"] = [
-        plate_well_to_field("pert_type")[plate][well]
-        for plate, well in data[["Metadata_Plate_Map", "Metadata_Well"]].to_numpy()
-    ]
+    with Pool() as p:
+        data["Metadata_pert_type"] = p.map(
+            lambda x: id_pert.get(x), data["Metadata_broad_sample"]
+        )
+
+    # data["Metadata_control_type"] = [
+    #     plate_well_to_field("pert_type")[plate][well]
+    #     for plate, well in data[["Metadata_Plate_Map", "Metadata_Well"]].to_numpy()
+    # ]
 
     return data
