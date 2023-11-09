@@ -20,7 +20,7 @@ from correct_position_effect import (
     regress_out_cell_counts_parallel,
     subtract_well_mean_parallel,
 )
-from metadata import add_metadata
+from metadata import add_metadata, add_jump_metadata
 from methods import (
     drop_na_inf,
     feature_select,
@@ -96,7 +96,7 @@ data["Metadata_Batch"] = data["Metadata_Plate"].map(plate_to_batch)
 
 
 print("Adding control metadata to dataset")
-processed_data = add_metadata(data, metadata)
+processed_data = add_jump_metadata(data, metadata)
 
 # %% Execution
 

@@ -220,3 +220,25 @@ def plate_well_to_field(platemaps_meta: pd.DataFrame, field: str):
         }
         for plate_map in platemaps_meta["plate_map_name"].unique()
     }
+
+
+def add_jump_metadata(data: pd.DataFrame, pool=True):
+    wells = pd.read_csv(
+        "https://github.com/jump-cellpainting/datasets/raw/main/metadata/well.csv.gz"
+    )
+
+    unique_ids = platemaps_meta["broad_sample"].unique()
+
+    merged_df = pd.merge(
+        data,
+        wells,
+        on=["Metadata_Source", "Metadata_Plate", "Metadata_Well"],
+    )
+
+    print("Querying perturbation types")
+    with Pool() as p:
+        control_info = p.map(
+            lambda x: try_query(x, "JCPP2022"), merge_df["Metadata_JCP2022"].unique()
+        )
+
+    return control_info
