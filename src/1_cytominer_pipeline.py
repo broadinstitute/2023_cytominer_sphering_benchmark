@@ -43,11 +43,10 @@ run.mkdir(parents=True, exist_ok=True)
 def simple_save(data: pd.DataFrame, label: str or None = None):
     label = label or "output"
 
-    output(
-        df=data,
-        output_filename=run / f"{label}.csv.gz",
-        compression_options={"method": "gzip"},
-        float_format=None,
+    data.to_parquet(
+        path=run / f"{label}.parquet",
+        engine="pyarrow",
+        compression="zstd",
     )
 
 
