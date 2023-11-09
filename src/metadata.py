@@ -111,13 +111,13 @@ def add_metadata(
     return data
 
 
-def try_query(x: str or float):
+def try_query(x: str or float, input_column: str = "broad_sample"):
     result = ("None", "None")
     if isinstance(x, str):  # skip NaNs
         try:
             result = run_query(
                 x,
-                input_column="broad_sample",
+                input_column=input_column,
                 output_column="pert_type,control_type",
             )[0]
         except:
@@ -125,7 +125,7 @@ def try_query(x: str or float):
                 try:  # If it is not found directly and it starts with BRD, try this
                     result = run_query(
                         f"{x[:13]}%",
-                        input_column="broad_sample",
+                        input_column=input_column,
                         output_column="pert_type,control_type",
                         operator="LIKE",
                     )[0]
