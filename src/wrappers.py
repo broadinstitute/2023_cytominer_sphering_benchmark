@@ -52,7 +52,7 @@ def apply_scaler_on_features(
     features, meta = split_meta(data)
 
     if fit_negcon:
-        negcon_indices = meta["Metadata_control_type"] == "negcon"
+        negcon_indices = meta["Metadata_pert_type"] == "negcon"
         negcons = features.loc[negcon_indices]
         assert len(
             negcons
