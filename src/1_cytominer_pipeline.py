@@ -96,7 +96,7 @@ data["Metadata_Batch"] = data["Metadata_Plate"].map(plate_to_batch)
 
 
 print("Adding control metadata to dataset")
-processed_data = add_jump_metadata(data, metadata)
+processed_data = add_jump_metadata(data)
 
 # %% Execution
 

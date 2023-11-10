@@ -222,23 +222,94 @@ def plate_well_to_field(platemaps_meta: pd.DataFrame, field: str):
     }
 
 
-def add_jump_metadata(data: pd.DataFrame, pool=True):
+def add_jump_metadata(
+    data: pd.DataFrame,
+    ref_field: str = "Metadata_JCP2022",
+    pert_field: str = "Metadata_pert_type",
+    pool: bool = True,
+):
+    """Append jump metadata to existing metadata dataframe and remove invalid entries.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Metadata dataframe
+    ref_field : str
+        Field used for broad_babel queries and to place manually assigned
+        entries.
+    pert_field : str
+        Name of field for perturbations
+    pool : bool
+        Whether or not to thread broad_babel queries
+
+    Examples
+    --------
+    FIXME: Add docs.
+
+    """
     wells = pd.read_csv(
         "https://github.com/jump-cellpainting/datasets/raw/main/metadata/well.csv.gz"
     )
 
-    unique_ids = platemaps_meta["broad_sample"].unique()
-
-    merged_df = pd.merge(
+    profiles_wmeta = pd.merge(
         data,
         wells,
         on=["Metadata_Source", "Metadata_Plate", "Metadata_Well"],
     )
 
     print("Querying perturbation types")
+    unique_jcp_ids = profiles_wmeta[ref_field].unique()
     with Pool() as p:
-        control_info = p.map(
-            lambda x: try_query(x, "JCPP2022"), merge_df["Metadata_JCP2022"].unique()
+        control_info = np.array(
+            p.map(lambda x: try_query(x, "JCP2022"), unique_jcp_ids)
         )
+    controls_mask = control_info[:, 0] == "control"
+    np.put(control_info[:, 0], controls_mask, control_info[controls_mask, 1])
+    combined_control_info = control_info[:, 0]
 
-    return control_info
+    # This has to be before renaming JCPS
+    mapper_jcp2control = {
+        jcp: control for jcp, control in zip(unique_jcp_ids, combined_control_info)
+    }
+
+    profiles_wmeta[pert_field] = profiles_wmeta[ref_field].apply(
+        lambda x: mapper_jcp2control.get(x, None)
+    )
+
+    # Use readable names for controls and non-treatment codes
+    # Some compounds do not have control information, nor broad_sample association
+    # 'JCP2022_999999', 'JCP2022_050797'
+    # These where obtained from John Arevalo's code https://github.com/carpenter-singh-lab/2023_Arevalo_BatchCorrection/blob/95052ea070195f1749e50f9ad058cfa53d7cc430/loader.py#L18()
+    MAPPER = {
+        "JCP2022_085227": "Aloxistatin",
+        "JCP2022_037716": "AMG900",
+        "JCP2022_025848": "Dexamethasone",
+        "JCP2022_046054": "FK-866",
+        "JCP2022_035095": "LY2109761",
+        "JCP2022_064022": "NVS-PAK1-1",
+        "JCP2022_050797": "Quinidine",
+        "JCP2022_012818": "TC-S-7004",
+        "JCP2022_033924": "DMSO",
+        "JCP2022_999999": "UNTREATED",
+        "JCP2022_UNKNOWN": "UNKNOWN",
+        "JCP2022_900001": "BAD CONSTRUCT",
+    }
+
+    # And assign them as negative controls (Remember to remove invalid entries)
+    # Otherwise they will be used as negcons
+    manual_negcons = profiles_wmeta[ref_field].isin(MAPPER.keys())
+    profiles_wmeta.loc[manual_negcons, pert_field] = "negcon"
+    profiles_wmeta[ref_field] = profiles_wmeta[ref_field].apply(
+        lambda x: MAPPER.get(x, x)
+    )
+
+    # Filter out wells
+    profiles_wmeta = profiles_wmeta[
+        ~profiles_wmeta[ref_field].isin(["UNTREATED", "UNKNOWN", "BAD CONSTRUCT"])
+    ]
+
+    # Consolidate positive controls
+    profiles_wmeta[pert_field].replace(
+        {k: "poscon" for k in profiles_wmeta[pert_field].unique() if "poscon" in k}
+    )
+    return profiles_wmeta
