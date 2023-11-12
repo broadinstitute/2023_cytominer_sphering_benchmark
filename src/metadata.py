@@ -295,7 +295,7 @@ def add_jump_metadata(
         "JCP2022_900001": "BAD CONSTRUCT",
     }
 
-    # And assign them as negative controls (Remember to remove invalid entries)
+    # Assign these as negative controls (Remember to remove invalid entries)
     # Otherwise they will be used as negcons
     manual_negcons = profiles_wmeta[ref_field].isin(MAPPER.keys())
     profiles_wmeta.loc[manual_negcons, pert_field] = "negcon"
@@ -303,13 +303,32 @@ def add_jump_metadata(
         lambda x: MAPPER.get(x, x)
     )
 
-    # Filter out wells
-    profiles_wmeta = profiles_wmeta[
+    # Filter out wells with invalid labels
+    profiles_wmeta = profiles_wmeta.loc[
         ~profiles_wmeta[ref_field].isin(["UNTREATED", "UNKNOWN", "BAD CONSTRUCT"])
+    ]
+
+    # Filter out wells with invalid pert_field
+    profiles_wmeta = profiles_wmeta[~(profiles_wmeta[pert_field] == None)]
+
+    # Remove plates without negcons
+    plate_contains_negcon = (
+        profiles_wmeta.groupby("Metadata_Plate")[pert_field]
+        .apply(lambda x: False if "negcon" in x else True)
+        .to_dict()
+    )
+    profiles_wmeta = profiles_wmeta[
+        profiles_wmeta["Metadata_Plate"].map(plate_contains_negcon)
     ]
 
     # Consolidate positive controls
     profiles_wmeta[pert_field].replace(
-        {k: "poscon" for k in profiles_wmeta[pert_field].unique() if "poscon" in k}
+        {
+            k: "poscon"
+            for k in profiles_wmeta[pert_field].unique()
+            if k is not None and "poscon" in k
+        }
     )
+
+    # assert not profiles_wmeta[pert_field].isnan(), "Null perturbation type remains"
     return profiles_wmeta
