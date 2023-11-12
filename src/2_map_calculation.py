@@ -156,7 +156,7 @@ pp_mapping = {
 legend_label = "Pipeline (Frac. q < 0.05)"
 aggregated_data[legend_label] = aggregated_data["Metadata_Pipeline"].map(pp_mapping)
 ax = sns.histplot(
-    data=aggregated_data,
+    data=aggregated_data.sort_values(legend_label),
     x="mean_average_precision",
     hue=legend_label,
     element="step",
@@ -165,8 +165,9 @@ ax = sns.histplot(
     bins=30,
 )
 plt.title(
-    f"Effect of sphering steps on retrievability (n={int(aggregated_data[legend_label].value_counts().iloc[0])})"
+    f"Effect of sphering rounds on retrievability (n={int(aggregated_data[legend_label].value_counts().iloc[0])})"
 )
+plt.xlabel(f"mAP (neg_sameby = {neg_sameby[0].split('_')[-1]})")
 sns.move_legend(ax, loc="upper left")
 
 plt.savefig(figs_dir / f"{run}_all_pipelines.png", dpi=300)
