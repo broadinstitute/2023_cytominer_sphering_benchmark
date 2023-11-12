@@ -13,6 +13,44 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# Performing a second sphering (Whitening) step discretises the data,
+# and any sphering increases average mAP but reduces the fraction of entries
+# with low q-values (False Discovery Rate IIRC).
+#
+# Other things learning during development are:
+# - parquet files offer much better IO speed at barely any space cost when compared to csv.gz.
+# - Threading speeds up processing times, so always use it in embarassingly parallel situations.
+# - Keep the "final" metadata all in one place, ideally an accessible package.
+#
+# Finally, things to bring up for discussion
+# - There are many inconsistencies with JUMP metadata; let's put an accessibility tool in a single place.
+# - Does it makes sense for double-sphered samples to bin the way they are?
+#   - The number of unique mAP values for each pipeline is: baseline
+#     - Global + Batch sphering   1126
+#     - Global sphering           7794
+#     - No sphering               7432
+# # %%
+
+# df = (
+#     data.loc(axis=1)[
+#         [
+#             "Metadata_Plate",
+#             "Metadata_Well",
+#             "Metadata_pert_type",
+#         ]
+#     ]
+#     .assign(row=lambda x: x.Metadata_Well.str[0:1])
+#     .assign(col=lambda x: x.Metadata_Well.str[1:])
+# )
+
+# df.columns = [
+#     "Metadata_Plate",
+#     "well_position",
+#     "pert_type",
+#     "row",
+#     "col",
+# ]
 # %%
 import logging
 import warnings
@@ -172,29 +210,3 @@ sns.move_legend(ax, loc="upper left")
 
 plt.savefig(figs_dir / f"{run}_all_pipelines.png", dpi=300)
 plt.close()
-
-# # %% [markdown]
-# It seems like performing the second sphering step discretises the data,
-# and any sphering increases average mAP but reduces the fraction of entries
-# with low q-values (False Discovery Rate IIRC).
-# # %%
-
-# df = (
-#     data.loc(axis=1)[
-#         [
-#             "Metadata_Plate",
-#             "Metadata_Well",
-#             "Metadata_pert_type",
-#         ]
-#     ]
-#     .assign(row=lambda x: x.Metadata_Well.str[0:1])
-#     .assign(col=lambda x: x.Metadata_Well.str[1:])
-# )
-
-# df.columns = [
-#     "Metadata_Plate",
-#     "well_position",
-#     "pert_type",
-#     "row",
-#     "col",
-# ]
