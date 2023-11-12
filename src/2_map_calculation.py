@@ -173,6 +173,10 @@ sns.move_legend(ax, loc="upper left")
 plt.savefig(figs_dir / f"{run}_all_pipelines.png", dpi=300)
 plt.close()
 
+# # %% [markdown]
+# It seems like performing the second sphering step discretises the data,
+# and any sphering increases average mAP but reduces the fraction of entries
+# with low q-values (False Discovery Rate IIRC).
 # # %%
 
 # df = (
