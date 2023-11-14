@@ -188,7 +188,7 @@ aggregated_data.to_csv(output_dir / f"replicate_mAP_all_pipelines.csv.gz", index
 # %% Number of compounds for which q<0.05 and plot
 
 recovered_fraction = aggregated_data.groupby("Metadata_Pipeline").apply(
-    lambda x: round((sum(x["q_value"] > 0.05) / len(aggregated_data)), 2)
+    lambda x: round((sum(x["q_value"] < 0.05) / len(aggregated_data)), 2)
 )
 pp_mapping = {
     "baseline": f"No sphering ({recovered_fraction.baseline})",
