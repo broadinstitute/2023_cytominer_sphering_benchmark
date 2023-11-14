@@ -14,23 +14,28 @@
 # ---
 
 # %% [markdown]
-# Performing a second sphering (Whitening) step discretises the data,
-# and any sphering increases average mAP but reduces the fraction of entries
-# with low q-values (False Discovery Rate IIRC).
-#
-# Other things learning during development are:
-# - parquet files offer much better IO speed at barely any space cost when compared to csv.gz.
-# - Threading speeds up processing times, so always use it in embarassingly parallel situations.
-# - Keep the "final" metadata all in one place, ideally an accessible package.
-#
-# Finally, things to bring up for discussion
-# - There are many inconsistencies with JUMP metadata; let's put an accessibility tool in a single place.
-# - Does it makes sense for double-sphered samples to bin the way they are?
-#   - The number of unique mAP values for each pipeline is: baseline
-#     - Global + Batch sphering   1126
-#     - Global sphering           7794
-#     - No sphering               7432
+"""
+Performing a second sphering (Whitening) step discretises the data,
+and any sphering increases average mAP as well as the fraction of entries
+with low q-values (False Discovery Rate IIRC).
+
+Other things learning during development are:
+- parquet files offer much better IO speed at barely any space cost when compared to csv.gz.
+- Threading speeds up processing times, so always use it in embarassingly parallel situations.
+- Keep the "final" metadata all in one place, ideally an accessible package.
+
+Finally, things to bring up for discussion
+- There are many inconsistencies with JUMP metadata; let's put an accessibility tool in a single place.
+- Does it makes sense for double-sphered samples to bin the way they are?
+  - The number of unique mAP values for each pipeline is: baseline
+    - Global + Batch sphering   1126
+    - Global sphering           7794
+    - No sphering               7432
+"""
 # # %%
+#
+#
+#
 
 # df = (
 #     data.loc(axis=1)[
