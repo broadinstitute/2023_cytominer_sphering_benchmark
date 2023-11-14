@@ -267,7 +267,7 @@ def add_jump_metadata(
     np.put(control_info[:, 0], controls_mask, control_info[controls_mask, 1])
     combined_control_info = control_info[:, 0]
 
-    # This has to be before renaming JCPS
+    # This has to be done before renaming JCPS
     mapper_jcp2control = {
         jcp: control for jcp, control in zip(unique_jcp_ids, combined_control_info)
     }
