@@ -208,9 +208,10 @@ ax = sns.histplot(
     bins=30,
 )
 plt.title(
-    f"Effect of sphering rounds on retrievability (n={int(aggregated_data[legend_label].value_counts().iloc[0])})"
+    f"Effect of sphering rounds on technical retrievability (n={int(aggregated_data[legend_label].value_counts().iloc[0])})"
 )
-plt.xlabel(f"mAP (neg_sameby = {neg_sameby[0].split('_')[-1]})")
+# plt.xlabel(f"mAP (neg_sameby = {neg_sameby[0].split('_')[-1]})")
+plt.xlabel(f"mAP (neg_sameby = Metadata_Plate)")
 sns.move_legend(ax, loc="upper left")
 
 plt.savefig(figs_dir / f"{run}_all_pipelines.png", dpi=300)
