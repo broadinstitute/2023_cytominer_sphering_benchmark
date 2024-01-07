@@ -34,12 +34,9 @@ def apply_scaler(data: pd.DataFrame, scaler: Spherize or RobustMAD, **kwargs):
         results = results.values
     return pd.DataFrame(
         results,
-        # columns=infer_cp_features(data, image_features=False),
         columns=data.columns,
         index=data.index,
     )
-
-    # normalized = meta_df.merge(feature_df, left_index=True, right_index=True)
 
 
 def apply_scaler_on_features(
