@@ -46,7 +46,7 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
     level=logging.DEBUG,
 )
-loggging.getLogger("sphering")
+logging.getLogger("sphering")
 
 
 def simple_save(data: pd.DataFrame, label: str or None = None):
