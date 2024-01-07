@@ -16,20 +16,13 @@ from pycytominer.cyto_utils import output
 from pycytominer.feature_select import feature_select
 from tqdm import tqdm
 
-from correct_position_effect import (
-    regress_out_cell_counts_parallel,
-    subtract_well_mean_parallel,
-)
-from metadata import add_metadata, add_jump_metadata
-from methods import (
-    drop_na_inf,
-    feature_select,
-    mad_robustize,
-    remove_outliers,
-    spherize,
-)
+from correct_position_effect import (regress_out_cell_counts_parallel,
+                                     subtract_well_mean_parallel)
+from metadata import add_jump_metadata, add_metadata
+from methods import (drop_na_inf, feature_select, mad_robustize,
+                     remove_outliers, spherize)
 from utils import load_profiles_threaded
-from wrappers import scale_grouped_parallel
+from wrappers import apply_scaler, scale_grouped_parallel
 
 # %%
 
@@ -62,7 +55,26 @@ config = {
     (remove_outliers,): {"samples_thresh": 1e4},
     (drop_na_inf,): {"axis": 1},
     # Standard
-    (feature_select,): {},
+    (feature_select,): {
+        "operation": [
+            "variance_threshold",
+            "blocklist",
+            "drop_outliers",  # Check if this is done in profiling wf
+        ]
+    },
+    (feature_select,): {
+        "operation": [
+            "noise_removal",
+        ],
+        "noise_removal_perturb_groups": "Metadata_JCP2022",
+        "noise_removal_stdev_cutoff": 1.0,
+        "samples": "'Metadata_pert_type'=='trt'",
+    },
+    (feature_select,): {
+        "operation": [
+            "correlation_threshold",
+        ]
+    },
     (spherize,): {"method": "PCA"},
     (spherize, "Metadata_Batch"): {"method": "PCA"},
 }
@@ -101,18 +113,21 @@ processed_data = add_jump_metadata(data)
 # %% Execution
 
 print(f"Starting pipeline run {now}")
+
+pool = True
 for scaler_level, kwargs in tqdm(config.items()):
     scaler, *level = scaler_level
     level = level[0] if len(level) else None
 
     if level:  # Split into subsets and process them
         processed_data = scale_grouped_parallel(
-            data=processed_data, column=level, scaler=scaler, **kwargs
+            data=processed_data, column=level, scaler=scaler, pool=pool, **kwargs
         )
     else:
         processed_data = scaler(processed_data, **kwargs)
 
     if scaler is spherize:
         simple_save(processed_data, label=f"sphering_{level}")
+        pool = False
     elif scaler is feature_select:
         simple_save(processed_data, label="baseline")

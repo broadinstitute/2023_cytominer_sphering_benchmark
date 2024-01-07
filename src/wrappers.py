@@ -2,6 +2,7 @@
 "Wrappers that homogeneise method interfaces."
 
 from inspect import isclass
+from time import perf_counter
 from typing import Callable
 
 import pandas as pd
@@ -75,7 +76,9 @@ def split_meta(data: pd.DataFrame):
     return data.loc(axis=1)[features], data.loc(axis=1)[meta]
 
 
-def scale_grouped_parallel(data: pd.DataFrame, column: str, scaler: Callable, **kwargs):
+def scale_grouped_parallel(
+    data: pd.DataFrame, column: str, scaler: Callable, pool=True, **kwargs
+):
     """
     Parallelises a scaler on subsets of the data.
     """
@@ -83,12 +86,14 @@ def scale_grouped_parallel(data: pd.DataFrame, column: str, scaler: Callable, **
         data.loc[data[column] == group_id] for group_id in data[column].unique()
     ]
 
-    with Pool() as p:
-        results = p.map(
-            lambda x: apply_scaler(x, scaler, **kwargs),
-            grouped_data,
-        )
+    if pool:
+        with Pool() as p:
+            results = p.map(
+                lambda x: apply_scaler(x, scaler, **kwargs),
+                grouped_data,
+            )
 
-    # results = [apply_scaler(x, scaler, **kwargs) for x in grouped_data]
+    else:
+        results = [apply_scaler(x, scaler, **kwargs) for x in grouped_data]
 
     return pd.concat(results, axis=0, ignore_index=True)
