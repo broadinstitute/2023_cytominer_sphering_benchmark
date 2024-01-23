@@ -90,7 +90,6 @@ if sample is not None:  # Sample data
 
 # %%
 
-
 data = load_profiles_threaded(sources)
 data = pd.concat(data, axis=0, ignore_index=True)
 
